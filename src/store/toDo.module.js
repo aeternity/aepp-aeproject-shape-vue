@@ -32,7 +32,7 @@ const mutations = {
     'SET_PUBLIC_KEY'(state, publicKey) {
         state.publicKey = publicKey;
     },
-    'SET_PRODUCTS'(state, toDos) {
+    'SET_TO_DOS'(state, toDos) {
         state.toDos = [...toDos]
     },
     'TOGGLE_TASK_STATUS'(state, index) {

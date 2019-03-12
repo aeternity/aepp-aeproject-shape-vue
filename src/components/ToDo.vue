@@ -102,7 +102,7 @@
                 const allToDos = this.allToDos;
 
                 allToDos.push({
-                    id: allToDos.length > 0 ? allToDos.length - 1 : 0,
+                    id: allToDos.length > 0 ? allToDos.length : 0,
                     title: value,
                     completed: false
                 });
