@@ -1,5 +1,5 @@
 <template>
-	<section class="todoapp">
+	<section class="todoapp" :class="{ 'disable-todos': disableToDos }">
 		<header class="header">
 			<!--<h1>todos</h1>-->
 			<input class="new-todo"
@@ -46,6 +46,11 @@
 </template>
 
 <script>
+    import { Wallet } from '@aeternity/aepp-sdk';
+    import { MemoryAccount } from '@aeternity/aepp-sdk';
+    import { Crypto } from '@aeternity/aepp-sdk';
+    import settings from '../settings';
+
     export default {
         // app initial state
         data() {
@@ -53,8 +58,20 @@
                 visibleTasks: [],
                 newTodo: '',
                 editedTodo: null,
-                visibility: 'all'
+                visibility: 'all',
+                callOpts: {
+                    deposit: 0,
+                    gasPrice: 1000000000,
+                    amount: 0,
+                    fee: null, // sdk will automatically select this
+                    gas: 1000000,
+                    callData: '',
+                    verify: true
+                }
             }
+        },
+        props: {
+            disableToDos: Boolean
         },
 
         // watch todos change for localStorage persistence
@@ -93,31 +110,45 @@
         // methods that implement data logic.
         // note there's no DOM manipulation here at all.
         methods: {
-            addTodo: function () {
-                const value = this.newTodo && this.newTodo.trim()
-                if (!value) {
-                    return
+            async addTodo() {
+                this.$store.dispatch('toggleLoading');
+                try {
+                    const value = this.newTodo && this.newTodo.trim()
+                    if (!value) {
+                        return
+                    }
+
+                    const allToDos = this.allToDos;
+
+                    allToDos.push({
+                        id: allToDos.length > 0 ? allToDos.length : 0,
+                        title: value,
+                        completed: false
+                    });
+
+                    await this.onCallDataAndFunctionAsync('add_todo', `("${value}")`, '()');
+
+//                    await this.getContractTasks();
+
+                    this.$store.dispatch('setToDos', allToDos);
+                    this.$store.dispatch('toggleLoading');
+
+//                const callRes = await this.onCallStatic('get_todos', `()`, 'list(string)');
+//                console.log(callRes);
+
+                    this.newTodo = ''
+                } catch (e) {
+                    console.log(e);
+                    this.$store.dispatch('toggleLoading');
                 }
-
-                const allToDos = this.allToDos;
-
-                allToDos.push({
-                    id: allToDos.length > 0 ? allToDos.length : 0,
-                    title: value,
-                    completed: false
-                });
-
-                this.$store.dispatch('setToDos', allToDos);
-
-                this.newTodo = ''
             },
 
-            editTodo: function (todo) {
+            editTodo(todo) {
                 this.beforeEditCache = todo.title;
                 this.editedTodo = todo
             },
 
-            doneEdit: function (todo) {
+            doneEdit(todo) {
                 if (!this.editedTodo) {
                     return
                 }
@@ -128,7 +159,7 @@
                 }
             },
 
-            cancelEdit: function (todo) {
+            cancelEdit(todo) {
                 this.editedTodo = null;
                 todo.title = this.beforeEditCache
             },
@@ -156,10 +187,127 @@
             },
             removeTask(task) {
                 this.$store.dispatch('removeTask', task);
+            },
+            async getToDosCount() {
+                const hexStr = await this.getPublicKeyAsHex();
+                console.log(hexStr);
+
+                return await this.onCallStatic('get_todo_count', `0x${hexStr}`, 'int');
+            },
+            async getToDosOneByOne() {
+                const toDosCount = await this.getToDosCount();
+                console.log(toDosCount);
+                const publicKeyHex = await this.getPublicKeyAsHex();
+                const contractToDos = [];
+
+                for (let i = 0; i < toDosCount; i++) {
+                    const currentToDo = await this.onCallDataAndFunctionAsync('get_todo_by_index', `(0x${publicKeyHex}, 1)`, 'string');
+                    console.log(currentToDo);
+                    contractToDos.push(currentToDo);
+                }
+
+                console.log(contractToDos);
+            },
+            async getClient() {
+
+                if (settings.account.priv && settings.account.pub && settings.url) {
+                    try {
+                        const account = await Wallet({
+                            url: settings.url,
+                            internalUrl: settings.internalUrl,
+                            accounts: [MemoryAccount({
+                                keypair: {
+                                    secretKey: settings.account.priv,
+                                    publicKey: settings.account.pub
+                                }
+                            })],
+                            address: settings.account.pub,
+                            onTx: true,
+                            onChain: true,
+                            onAccount: true,
+                            onContract: true,
+                            networkId: settings.networkId
+                        });
+
+                        console.log(account);
+
+                        this.$store.dispatch('setAccount', account);
+                        this.accountBalance();
+                    } catch (err) {
+                        console.log(err);
+                    }
+                }
+            },
+            async accountBalance() {
+                const balance = await this.$store.getters.account.balance(settings.account.pub);
+                this.$store.dispatch('setAccountBalance', balance)
+            },
+            async onCallStatic(funcName, funcArgs, returnType) {
+                if (funcName && funcArgs && returnType) {
+                    try {
+                        const dataRes = await this.callStatic(funcName, funcArgs);
+                        const data = await this.$store.getters.account.contractDecodeData(returnType, dataRes.result.returnValue);
+                        return data.value
+                    } catch (err) {
+                        console.log(err);
+                    }
+                } else {
+                    console.log('Please enter a Function and 1 or more Arguments.');
+                }
+            },
+            async onCallDataAndFunctionAsync(funcName, funcArgs, returnType) {
+                const extraOpts = {
+                    'owner': settings.account.pub
+                    // 'vmVersion': 1
+                    // 'nonce': 0,
+                    // 'ttl': 9999999
+                };
+
+                const opts = Object.assign(extraOpts, this.callOpts);
+
+                if (funcName && funcArgs && returnType) {
+                    try {
+                        const dataRes = await this.callContract(funcName, funcArgs, opts)
+
+                        if (returnType !== '()') {
+                            const data = await this.$store.getters.account.contractDecodeData(returnType, dataRes.result.returnValue);
+                            console.log(data);
+                            return data
+                        }
+                    } catch (err) {
+                        console.log(err);
+                    }
+                } else {
+                    console.log('Please enter a Function and 1 or more Arguments.');
+                }
+            },
+            callContract(func, args, options) {
+                console.log(`calling a function on a deployed contract with func: ${func}, args: ${args} and options:`, options);
+                return this.$store.getters.account.contractCall(settings.contractAddress, 'sophia-address', settings.contractAddress, func, { args, options })
+            },
+            callStatic(func, args) {
+                console.log(`calling static func ${func} with args ${args}`);
+                return this.$store.getters.account.contractCallStatic(settings.contractAddress, 'sophia-address', func, { args })
+            },
+            async getContractTasks() {
+                const allToDos = await this.onCallStatic('get_todos', `()`, 'list(string)');
+                console.log(allToDos);
+            },
+            getPublicKeyAsHex() {
+                return Crypto.decodeBase58Check(settings.account.pub.split('_')[1]).toString('hex');
             }
         },
-        created() {
+        async created() {
+            this.$store.dispatch('toggleLoading');
+
+            await this.getClient();
+
+//            await this.getToDosOneByOne();
+
+            await this.getContractTasks();
             this.manageVisibility();
+
+            this.$store.dispatch('toggleLoading');
         },
 
         // a custom directive to wait for the DOM to be updated
@@ -220,9 +368,13 @@
 		display: none;
 	}
 
+	.disable-todos {
+		opacity: 0.2;
+	}
+
 	.todoapp {
 		background: #fff;
-		margin: 130px 0 40px 0;
+		margin: 200px;
 		position: relative;
 		box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
 		0 25px 50px 0 rgba(0, 0, 0, 0.1);
@@ -439,7 +591,7 @@
 	.footer {
 		color: #777;
 		padding: 10px 15px;
-		height: 20px;
+		height: 40px;
 		text-align: center;
 		border-top: 1px solid #e6e6e6;
 	}

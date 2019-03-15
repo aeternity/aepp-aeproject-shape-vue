@@ -1,6 +1,4 @@
 const state = {
-    publicKey: 'ak_zPoY7cSHy2wBKFsdWJGXM7LnSjVt6cn1TWBDdRBUMC7Tur2NQ',
-    privateKey: '36595b50bf097cd19423c40ee66b117ed15fc5ec03d8676796bdf32bc8fe367d82517293a0f82362eb4f93d0de77af5724fba64cbcf55542328bc173dbe13d33',
     toDos: [
         {
             id: 0,
@@ -22,16 +20,13 @@ const state = {
             title: 'Task 4',
             isCompleted: true
         }
-    ]
+    ],
+    account: {},
+    accountBalance: 0,
+    isLoading: false
 };
 
 const mutations = {
-    'SET_PRIVATE_KEY'(state, privateKey) {
-        state.privateKey = privateKey;
-    },
-    'SET_PUBLIC_KEY'(state, publicKey) {
-        state.publicKey = publicKey;
-    },
     'SET_TO_DOS'(state, toDos) {
         state.toDos = [...toDos]
     },
@@ -50,16 +45,19 @@ const mutations = {
         if (index > -1) {
             state.toDos.splice(index, 1);
         }
+    },
+    'SET_ACCOUNT'(state, account) {
+        state.account = account
+    },
+    'SET_ACCOUNT_BALANCE'(state, balance) {
+        state.accountBalance = balance
+    },
+    'TOGGLE_LOADING'(state) {
+        state.isLoading = !state.isLoading
     }
 };
 
 const actions = {
-    setPrivateKey: ({ commit }, privateKey) => {
-        commit('SET_PRIVATE_KEY', privateKey);
-    },
-    setPublicKey: ({ commit }, publicKey) => {
-        commit('SET_PUBLIC_KEY', publicKey);
-    },
     setToDos: ({ commit }, toDos) => {
         commit("SET_TO_DOS", toDos)
     },
@@ -68,16 +66,19 @@ const actions = {
     },
     removeTask: ({ commit }, task) => {
         commit("REMOVE_TASK", task)
+    },
+    setAccount: ({ commit }, account) => {
+        commit("SET_ACCOUNT", account)
+    },
+    setAccountBalance: ({ commit }, balance) => {
+        commit("SET_ACCOUNT_BALANCE", balance)
+    },
+    toggleLoading: ({ commit }) => {
+        commit("TOGGLE_LOADING")
     }
 };
 
 const getters = {
-    publicKey: state => {
-        return state.publicKey;
-    },
-    privateKey: state => {
-        return state.privateKey;
-    },
     toDos: state => {
         return state.toDos
     },
@@ -89,6 +90,15 @@ const getters = {
     },
     remainingToDos: state => {
         return state.toDos.filter(todo => !todo.isCompleted).length
+    },
+    account: state => {
+        return state.account
+    },
+    accountBalance: state => {
+        return state.accountBalance
+    },
+    isLoading: state => {
+        return state.isLoading
     }
 };
 
