@@ -10,15 +10,14 @@
 		</header>
 		<section class="main" v-show="allToDos.length" v-cloak>
 			<ul class="todo-list">
-				<li v-for="todo in visibleTasks"
+				<li v-for="(todo, i) in visibleTasks"
 					@click="toggleTaskStatus(todo.id)"
 					class="todo"
-					:key="todo.id"
+					:key="`${i}-${todo.id}`"
 					:class="{ completed: todo.isCompleted, editing: todo == editedTodo }">
 					<div class="view">
 						<input class="toggle" type="checkbox" @click.prevent v-model="todo.isCompleted">
 						<label @dblclick="editTodo(todo)">{{ todo.title }}</label>
-						<button class="destroy" @click.prevent="removeTask(todo)"></button>
 					</div>
 					<input class="edit" type="text"
 						v-model="todo.title"
@@ -38,9 +37,6 @@
 				<li><a @click="manageVisibility('active')" :class="{ selected: visibility == 'active' }">Active</a></li>
 				<li><a @click="manageVisibility('completed')" :class="{ selected: visibility == 'completed' }">Completed</a></li>
 			</ul>
-			<button class="clear-completed" v-show="allToDos.length > remaining">
-				Clear completed
-			</button>
 		</footer>
 	</section>
 </template>
@@ -73,19 +69,6 @@
         props: {
             disableToDos: Boolean
         },
-
-        // watch todos change for localStorage persistence
-//        watch: {
-//            todos: {
-//                handler: function (todos) {
-//                    todoStorage.save(todos)
-//                },
-//                deep: true
-//            }
-//        },
-
-        // computed properties
-        // http://vuejs.org/guide/computed.html
         computed: {
             allToDos() {
                 return this.$store.getters.toDos;
@@ -130,7 +113,6 @@
 
                     await this.getContractTasks();
 
-                    this.$store.dispatch('setToDos', allToDos);
                     this.$store.dispatch('toggleLoading');
                     this.newTodo = ''
                 } catch (e) {
@@ -189,11 +171,6 @@
                     this.$store.dispatch('toggleLoading');
                     console.log(err);
                 }
-            },
-            removeTask(task) {
-                console.log(task);
-
-//                this.$store.dispatch('removeTask', task);
             },
             async getToDosCount() {
                 const hexStr = await this.getPublicKeyAsHex();
@@ -411,7 +388,7 @@
 
 	.todoapp {
 		background: #fff;
-		margin: 200px;
+		margin: 100px 200px;
 		position: relative;
 		box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
 		0 25px 50px 0 rgba(0, 0, 0, 0.1);
