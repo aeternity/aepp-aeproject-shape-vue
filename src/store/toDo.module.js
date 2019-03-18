@@ -1,26 +1,5 @@
 const state = {
-    toDos: [
-        {
-            id: 0,
-            title: 'Task 1',
-            isCompleted: false
-        },
-        {
-            id: 1,
-            title: 'Task 2',
-            isCompleted: false
-        },
-        {
-            id: 2,
-            title: 'Task 3',
-            isCompleted: true
-        },
-        {
-            id: 3,
-            title: 'Task 4',
-            isCompleted: true
-        }
-    ],
+    toDos: [],
     account: {},
     accountBalance: 0,
     isLoading: false

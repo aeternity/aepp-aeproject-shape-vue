@@ -18,7 +18,7 @@
 					<div class="view">
 						<input class="toggle" type="checkbox" @click.prevent v-model="todo.isCompleted">
 						<label @dblclick="editTodo(todo)">{{ todo.title }}</label>
-						<button class="destroy" @click="removeTask(todo)"></button>
+						<button class="destroy" @click.prevent="removeTask(todo)"></button>
 					</div>
 					<input class="edit" type="text"
 						v-model="todo.title"
@@ -126,16 +126,12 @@
                         completed: false
                     });
 
-                    await this.onCallDataAndFunctionAsync('add_todo', `("${value}")`, '()');
+                    await this.onCallDataAndFunctionAsync('add_todo', `("${value}")`, 'int');
 
-//                    await this.getContractTasks();
+                    await this.getContractTasks();
 
                     this.$store.dispatch('setToDos', allToDos);
                     this.$store.dispatch('toggleLoading');
-
-//                const callRes = await this.onCallStatic('get_todos', `()`, 'list(string)');
-//                console.log(callRes);
-
                     this.newTodo = ''
                 } catch (e) {
                     console.log(e);
@@ -182,11 +178,22 @@
                     }
                 }
             },
-            toggleTaskStatus(key) {
-                this.$store.dispatch('toggleTaskStatus', key);
+            async toggleTaskStatus(key) {
+                this.$store.dispatch('toggleLoading');
+
+                try {
+                    await this.onCallDataAndFunctionAsync('edit_todo_state', `(${this.allToDos[key - 1].id}, ${!this.allToDos[key - 1].isCompleted})`, '()');
+                    this.$store.dispatch('toggleTaskStatus', key);
+                    this.$store.dispatch('toggleLoading');
+                } catch (err) {
+                    this.$store.dispatch('toggleLoading');
+                    console.log(err);
+                }
             },
             removeTask(task) {
-                this.$store.dispatch('removeTask', task);
+                console.log(task);
+
+//                this.$store.dispatch('removeTask', task);
             },
             async getToDosCount() {
                 const hexStr = await this.getPublicKeyAsHex();
@@ -201,7 +208,7 @@
                 const contractToDos = [];
 
                 for (let i = 0; i < toDosCount; i++) {
-                    const currentToDo = await this.onCallDataAndFunctionAsync('get_todo_by_index', `(0x${publicKeyHex}, 1)`, 'string');
+                    const currentToDo = await this.onCallStatic('get_todo_by_id', `(0x${publicKeyHex}, ${i++})`, 'string');
                     console.log(currentToDo);
                     contractToDos.push(currentToDo);
                 }
@@ -290,11 +297,41 @@
                 return this.$store.getters.account.contractCallStatic(settings.contractAddress, 'sophia-address', func, { args })
             },
             async getContractTasks() {
-                const allToDos = await this.onCallStatic('get_todos', `()`, 'list(string)');
-                console.log(allToDos);
+                const allToDosResponse = await this.onCallStatic('get_todos', `()`, 'list((int, (string,bool)))');
+                const parsedToDos = this.convertSophiaListToTodos(allToDosResponse);
+                console.log(parsedToDos);
+                this.$store.dispatch('setToDos', parsedToDos);
             },
             getPublicKeyAsHex() {
                 return Crypto.decodeBase58Check(settings.account.pub.split('_')[1]).toString('hex');
+            },
+            convertToTODO(data) {
+
+                let isNan = isNaN(data[1].value);
+                if (!Array.isArray(data) || data.length !== 2 || isNan) { // || (!data[0].value || !data[1].value)
+                    throw new Error('Cannot convert to "todo". Invalid data!');
+                }
+
+                return {
+                    title: data[0].value,
+                    isCompleted: data[1].value === 1 ? true : false
+                }
+            },
+            convertSophiaListToTodos(data) {
+                let tempCollection = [];
+
+                for (let idTodoData of data) {
+
+                    let idTodoInfo = idTodoData.value;
+
+                    let id = idTodoInfo[0].value;
+                    let todo = this.convertToTODO(idTodoInfo[1].value);
+                    todo.id = id;
+
+                    tempCollection.push(todo);
+                }
+
+                return tempCollection;
             }
         },
         async created() {
