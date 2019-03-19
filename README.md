@@ -42,7 +42,6 @@ Let's deploy the contract:
 
 ```
     forgae history
-
 ```
 Copy the address of the contract that is shown as a Result in the report table.
 
