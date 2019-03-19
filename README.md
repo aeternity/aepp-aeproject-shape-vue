@@ -13,7 +13,6 @@ Please follow the steps bellow:
 First you need to install **[forgae](https://github.com/aeternity/aepp-forgae-js)** (if it is installed already, skip this step).
 ```
     npm install -g forgae
-    
 ```
 
 ## Download the vue shape
@@ -22,7 +21,6 @@ In a new empty folder run the following command:
 
 ```
     forgae shape vue
-
 ```
 
 Now a tidy structured project must have been shaped. 
@@ -43,7 +41,7 @@ Let's deploy the contract:
 ## Copy the deployed contract address
 
 ```
-forgae history
+    forgae history
 
 ```
 Copy the address of the contract that is shown as a Result in the report table.
