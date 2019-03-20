@@ -172,26 +172,6 @@
                     console.log(err);
                 }
             },
-            async getToDosCount() {
-                const hexStr = await this.getPublicKeyAsHex();
-                console.log(hexStr);
-
-                return await this.onCallStatic('get_todo_count', `0x${hexStr}`, 'int');
-            },
-            async getToDosOneByOne() {
-                const toDosCount = await this.getToDosCount();
-                console.log(toDosCount);
-                const publicKeyHex = await this.getPublicKeyAsHex();
-                const contractToDos = [];
-
-                for (let i = 0; i < toDosCount; i++) {
-                    const currentToDo = await this.onCallStatic('get_todo_by_id', `(0x${publicKeyHex}, ${i++})`, 'string');
-                    console.log(currentToDo);
-                    contractToDos.push(currentToDo);
-                }
-
-                console.log(contractToDos);
-            },
             async getClient() {
 
                 if (settings.account.priv && settings.account.pub && settings.url) {
