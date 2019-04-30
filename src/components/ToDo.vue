@@ -42,10 +42,11 @@
 </template>
 
 <script>
-    import { Wallet } from '@aeternity/aepp-sdk';
-    import { MemoryAccount } from '@aeternity/aepp-sdk';
-    import { Crypto } from '@aeternity/aepp-sdk';
+    import Ae from '@aeternity/aepp-sdk/es/ae/universal';
     import settings from '../settings';
+    import contractDetails from '../contractDetails';
+
+    const compilerUrl = 'https://compiler.aepps.com';
 
     export default {
         // app initial state
@@ -63,7 +64,8 @@
                     gas: 1000000,
                     callData: '',
                     verify: true
-                }
+                },
+                contractInstance: null
             }
         },
         props: {
@@ -109,7 +111,7 @@
                         completed: false
                     });
 
-                    await this.onCallDataAndFunctionAsync('add_todo', `("${value}")`, 'int');
+                    await this.onCallDataAndFunctionAsync('add_todo', [value], 'int');
 
                     await this.getContractTasks();
 
@@ -164,7 +166,7 @@
                 this.$store.dispatch('toggleLoading');
 
                 try {
-                    await this.onCallDataAndFunctionAsync('edit_todo_state', `(${this.allToDos[key - 1].id}, ${!this.allToDos[key - 1].isCompleted})`, '()');
+                    await this.onCallDataAndFunctionAsync('edit_todo_state', [this.allToDos[key - 1].id, !this.allToDos[key - 1].isCompleted], '()');
                     this.$store.dispatch('toggleTaskStatus', key);
                     this.$store.dispatch('toggleLoading');
                 } catch (err) {
@@ -173,45 +175,40 @@
                 }
             },
             async getClient() {
+                try {
+                    const networkId = settings.networkId;
 
-                if (settings.account.priv && settings.account.pub && settings.url) {
-                    try {
-                        const account = await Wallet({
+                    const clientNative = await Ae.compose({
+                        props: {
                             url: settings.url,
                             internalUrl: settings.internalUrl,
-                            accounts: [MemoryAccount({
-                                keypair: {
-                                    secretKey: settings.account.priv,
-                                    publicKey: settings.account.pub
-                                }
-                            })],
-                            address: settings.account.pub,
-                            onTx: true,
-                            onChain: true,
-                            onAccount: true,
-                            onContract: true,
-                            networkId: settings.networkId
-                        });
+                            compilerUrl: compilerUrl
+                        }
+                    })({ nativeMode: true, networkId })
 
-                        console.log(account);
+                    const account = { secretKey: settings.account.priv, publicKey: settings.account.pub }
 
-                        this.$store.dispatch('setAccount', account);
-                        this.accountBalance();
-                    } catch (err) {
-                        console.log(err);
-                    }
+                    await clientNative.setKeypair(account)
+
+                    this.client = clientNative
+
+                    this.$store.dispatch('setAccount', this.client);
+                    this.accountBalance();
+                    this.contractInstance = await this.client.getContractInstance(contractDetails.contractSource, { contractAddress: contractDetails.contractAddress });
+                    console.log(this.contractInstance);
+                } catch (err) {
+                    console.log(err);
                 }
             },
             async accountBalance() {
                 const balance = await this.$store.getters.account.balance(settings.account.pub);
                 this.$store.dispatch('setAccountBalance', balance)
             },
-            async onCallStatic(funcName, funcArgs, returnType) {
-                if (funcName && funcArgs && returnType) {
+            async onCallStatic(func, args, returnType) {
+                if (func && args && returnType) {
                     try {
-                        const dataRes = await this.callStatic(funcName, funcArgs);
-                        const data = await this.$store.getters.account.contractDecodeData(returnType, dataRes.result.returnValue);
-                        return data.value
+                        const res = await this.contractInstance.call(func, args)
+                        return res.decode(returnType);
                     } catch (err) {
                         console.log(err);
                     }
@@ -220,21 +217,13 @@
                 }
             },
             async onCallDataAndFunctionAsync(funcName, funcArgs, returnType) {
-                const extraOpts = {
-                    'owner': settings.account.pub
-                    // 'vmVersion': 1
-                    // 'nonce': 0,
-                    // 'ttl': 9999999
-                };
-
-                const opts = Object.assign(extraOpts, this.callOpts);
 
                 if (funcName && funcArgs && returnType) {
                     try {
-                        const dataRes = await this.callContract(funcName, funcArgs, opts)
+                        const res = await this.contractInstance.call(funcName, funcArgs);
 
                         if (returnType !== '()') {
-                            const data = await this.$store.getters.account.contractDecodeData(returnType, dataRes.result.returnValue);
+                            const data = await res.decode(returnType);
                             console.log(data);
                             return data
                         }
@@ -245,45 +234,27 @@
                     console.log('Please enter a Function and 1 or more Arguments.');
                 }
             },
-            callContract(func, args, options) {
-                console.log(`calling a function on a deployed contract with func: ${func}, args: ${args} and options:`, options);
-                return this.$store.getters.account.contractCall(settings.contractAddress, 'sophia-address', settings.contractAddress, func, { args, options })
-            },
-            callStatic(func, args) {
-                console.log(`calling static func ${func} with args ${args}`);
-                return this.$store.getters.account.contractCallStatic(settings.contractAddress, 'sophia-address', func, { args })
-            },
             async getContractTasks() {
                 const allToDosResponse = await this.onCallStatic('get_todos', `()`, 'list((int, (string,bool)))');
                 const parsedToDos = this.convertSophiaListToTodos(allToDosResponse);
                 console.log(parsedToDos);
                 this.$store.dispatch('setToDos', parsedToDos);
             },
-            getPublicKeyAsHex() {
-                return Crypto.decodeBase58Check(settings.account.pub.split('_')[1]).toString('hex');
-            },
             convertToTODO(data) {
-
-                let isNan = isNaN(data[1].value);
-                if (!Array.isArray(data) || data.length !== 2 || isNan) { // || (!data[0].value || !data[1].value)
-                    throw new Error('Cannot convert to "todo". Invalid data!');
-                }
-
                 return {
-                    title: data[0].value,
-                    isCompleted: data[1].value === 1 ? true : false
+                    title: data.name,
+                    isCompleted: data.is_completed
                 }
             },
             convertSophiaListToTodos(data) {
                 let tempCollection = [];
+                let taskId;
 
                 for (let idTodoData of data) {
+                    taskId = idTodoData[0];
 
-                    let idTodoInfo = idTodoData.value;
-
-                    let id = idTodoInfo[0].value;
-                    let todo = this.convertToTODO(idTodoInfo[1].value);
-                    todo.id = id;
+                    let todo = this.convertToTODO(idTodoData[1]);
+                    todo.id = taskId;
 
                     tempCollection.push(todo);
                 }
