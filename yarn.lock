@@ -14,10 +14,10 @@
     vue-clickaway "^2.1.0"
     vue-touch "^2.0.0-beta.4"
 
-"@aeternity/aepp-sdk@^2.3.2":
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/@aeternity/aepp-sdk/-/aepp-sdk-2.3.2.tgz#80e2fa9e8558dab834515d8d29853bb64b7620eb"
-  integrity sha512-8YlJ1DfHwcGnWOQlFU3MWXXXsHO2HzMVGmBMh+3heHYcfya3zcwEcPqeybSQjDhk0w6KU4vegiYvSoQIo1qa1Q==
+"@aeternity/aepp-sdk@3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@aeternity/aepp-sdk/-/aepp-sdk-3.1.0.tgz#b86aa0bb40c095e9787115937adf246ec24d7974"
+  integrity sha512-dvdoZuHN6fOJvQJuelbt4DmNlI0xpS8ObSs5LN1X8Q0Ifc/a+rk3ROGyECKMGw99+rx1ASCjhYubCe/nkLoihg==
   dependencies:
     "@aeternity/bip39" "^0.1.0"
     "@babel/runtime" "^7.0.0-beta.46"
