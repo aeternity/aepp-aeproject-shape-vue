@@ -47,7 +47,7 @@ Copy the address of the contract that is shown as a Result in the report table.
 
 ## Apply the deployed contract address
 
-Assign the deployed contract address(above step) to the `contractAddress` property in `src/settings.js` file. 
+Assign the deployed contract address(above step) to the `contractAddress` property in `src/contractDetails.js` file.
 Now we are ready to run the aepp.
 
 ```
