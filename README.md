@@ -1,6 +1,6 @@
 # aepp-forgae-shape-vue
 
-The shape project is a sample Wallet/Identity Aepp that expects an Aepp to be loaded into an iFrame contained into this base aepp..
+The shape project is a sample Wallet/Identity Aepp that expects an Aepp to be loaded into an iFrame contained into this base aepp.
 This loaded Aepp presents ready to use aepp with predefined **Vue.js** front-end framework and **forgae** integration.
 The provided boilerplate code contains all modules and settings needed to facilitate its usage - Vue.js project created by vue cli, a Sophia smart contract and scripts for deployment on the Blockchain.
 It gives a helpful code scaffolding for further forgae project development and shows examples how to read and record a data on the Blockchain through the browser.
