@@ -6,21 +6,8 @@
 		<div class="logo">
 			To-Do list vue Æpp
 		</div>
-		<ae-identicon :address="publicKey" size="base"/>
 	</header>
 </template>
-
-<script>
-    import settings from '../settings';
-
-    export default {
-        data() {
-            return {
-                publicKey: settings.account.pub
-            }
-        }
-    }
-</script>
 
 <style scoped>
 	#header {

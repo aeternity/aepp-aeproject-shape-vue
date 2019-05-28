@@ -43,7 +43,6 @@
 
 <script>
     import Aepp from '@aeternity/aepp-sdk/es/ae/aepp/';
-    import settings from '../settings';
     import contractDetails from '../contractDetails';
 
     export default {
@@ -196,16 +195,11 @@
                     });
 
                     this.$store.dispatch('setAccount', this.client);
-                    this.accountBalance();
                     this.contractInstance = await this.client.getContractInstance(contractDetails.contractSource, { contractAddress: contractDetails.contractAddress });
                     console.log(this.contractInstance);
                 } catch (err) {
                     console.log(err);
                 }
-            },
-            async accountBalance() {
-                const balance = await this.$store.getters.account.balance(settings.account.pub);
-                this.$store.dispatch('setAccountBalance', balance)
             },
             async callStatic(func, args) {
                 if (func && args) {
