@@ -1,3 +1,0 @@
-[submodule "js-sdk"]
-	path = js-sdk
-	url = https://github.com/aeternity/aepp-sdk-js.git

@@ -109,7 +109,7 @@
                         completed: false
                     });
 
-                    await this.call('add_todo', [value]);
+                    await this.contractInstance.call('add_todo', [value]);
 
                     await this.getContractTasks();
 
@@ -141,6 +141,7 @@
                 this.editedTodo = null;
                 todo.title = this.beforeEditCache
             },
+
             manageVisibility(visibilityMode) {
                 switch (visibilityMode) {
                     case 'active': {
@@ -160,11 +161,12 @@
                     }
                 }
             },
+
             async toggleTaskStatus(key) {
                 this.$store.dispatch('toggleLoading');
 
                 try {
-                    await this.call('edit_todo_state', [this.allToDos[key - 1].id, !this.allToDos[key - 1].isCompleted]);
+                    await this.contractInstance.call('edit_todo_state', [this.allToDos[key - 1].id, !this.allToDos[key - 1].isCompleted]);
                     this.$store.dispatch('toggleTaskStatus', key);
                     this.$store.dispatch('toggleLoading');
                 } catch (err) {
@@ -172,6 +174,7 @@
                     console.log(err);
                 }
             },
+
             async getReverseWindow() {
                 const iframe = document.createElement('iframe')
                 iframe.src = prompt('Enter wallet URL', 'http://localhost:9000')
@@ -187,6 +190,7 @@
                 })
                 return iframe.contentWindow
             },
+
             async getClient() {
                 try {
                     // Aepp approach
@@ -201,48 +205,22 @@
                     console.log(err);
                 }
             },
-            async callStatic(func, args) {
-                if (func && args) {
-                    try {
-                        const options = { callStatic: true };
-                        const res = await this.contractInstance.call(func, args, options);
-                        console.log(res);
-                        return res.decode();
-                    } catch (err) {
-                        console.log(err);
-                    }
-                } else {
-                    console.log('Please enter a Function and 1 or more Arguments.');
-                }
-            },
-            async call(funcName, funcArgs) {
 
-                if (funcName && funcArgs) {
-                    try {
-                        const res = await this.contractInstance.call(funcName, funcArgs);
-
-                        const data = await res.decode();
-                        console.log(data);
-                        return data
-                    } catch (err) {
-                        console.log(err);
-                    }
-                } else {
-                    console.log('Please enter a Function and 1 or more Arguments.');
-                }
-            },
             async getContractTasks() {
-                const allToDosResponse = await this.callStatic('get_todos', `[]`);
-                const parsedToDos = this.convertSophiaListToTodos(allToDosResponse);
+                const allToDosResponse = await this.contractInstance.call('get_todos', '[]', { callStatic: true });
+                const allToDos = await allToDosResponse.decode();
+                const parsedToDos = this.convertSophiaListToTodos(allToDos);
                 console.log(parsedToDos);
                 this.$store.dispatch('setToDos', parsedToDos);
             },
+
             convertToTODO(data) {
                 return {
                     title: data.name,
                     isCompleted: data.is_completed
                 }
             },
+
             convertSophiaListToTodos(data) {
                 let tempCollection = [];
                 let taskId;
@@ -269,8 +247,7 @@
             this.manageVisibility();
 
             this.$store.dispatch('toggleLoading');
-        }
-        ,
+        },
 
         // a custom directive to wait for the DOM to be updated
         // before focusing on the input field.
