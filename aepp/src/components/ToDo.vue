@@ -42,16 +42,14 @@
 </template>
 
 <script>
-    import Ae from '@aeternity/aepp-sdk/es/ae/universal';
-    import settings from '../settings';
+    import Aepp from '@aeternity/aepp-sdk/es/ae/aepp/';
     import contractDetails from '../contractDetails';
-
-    const compilerUrl = 'https://compiler.aepps.com';
 
     export default {
         // app initial state
         data() {
             return {
+                runningInFrame: window.parent !== window,
                 visibleTasks: [],
                 newTodo: '',
                 editedTodo: null,
@@ -111,7 +109,7 @@
                         completed: false
                     });
 
-                    await this.onCallDataAndFunctionAsync('add_todo', [value], 'int');
+                    await this.call('add_todo', [value]);
 
                     await this.getContractTasks();
 
@@ -166,7 +164,7 @@
                 this.$store.dispatch('toggleLoading');
 
                 try {
-                    await this.onCallDataAndFunctionAsync('edit_todo_state', [this.allToDos[key - 1].id, !this.allToDos[key - 1].isCompleted], '()');
+                    await this.call('edit_todo_state', [this.allToDos[key - 1].id, !this.allToDos[key - 1].isCompleted]);
                     this.$store.dispatch('toggleTaskStatus', key);
                     this.$store.dispatch('toggleLoading');
                 } catch (err) {
@@ -174,41 +172,42 @@
                     console.log(err);
                 }
             },
+            async getReverseWindow() {
+                const iframe = document.createElement('iframe')
+                iframe.src = prompt('Enter wallet URL', 'http://localhost:9000')
+                iframe.style.display = 'none'
+                document.body.appendChild(iframe)
+                await new Promise(resolve => {
+                    const handler = ({ data }) => {
+                        if (data.method !== 'ready') return
+                        window.removeEventListener('message', handler)
+                        resolve()
+                    }
+                    window.addEventListener('message', handler)
+                })
+                return iframe.contentWindow
+            },
             async getClient() {
                 try {
-                    const networkId = settings.networkId;
-
-                    const clientNative = await Ae.compose({
-                        props: {
-                            url: settings.url,
-                            internalUrl: settings.internalUrl,
-                            compilerUrl: compilerUrl
-                        }
-                    })({ nativeMode: true, networkId })
-
-                    const account = { secretKey: settings.account.priv, publicKey: settings.account.pub }
-
-                    await clientNative.setKeypair(account)
-
-                    this.client = clientNative
+                    // Aepp approach
+                    this.client = await Aepp({
+                        parent: this.runningInFrame ? window.parent : await this.getReverseWindow()
+                    });
 
                     this.$store.dispatch('setAccount', this.client);
-                    this.accountBalance();
                     this.contractInstance = await this.client.getContractInstance(contractDetails.contractSource, { contractAddress: contractDetails.contractAddress });
                     console.log(this.contractInstance);
                 } catch (err) {
                     console.log(err);
                 }
             },
-            async accountBalance() {
-                const balance = await this.$store.getters.account.balance(settings.account.pub);
-                this.$store.dispatch('setAccountBalance', balance)
-            },
-            async onCallStatic(func, args, returnType) {
-                if (func && args && returnType) {
+            async callStatic(func, args) {
+                if (func && args) {
                     try {
-                        const res = await this.contractInstance.call(func, args)
-                        return res.decode(returnType);
+                        const options = { callStatic: true };
+                        const res = await this.contractInstance.call(func, args, options);
+                        console.log(res);
+                        return res.decode();
                     } catch (err) {
                         console.log(err);
                     }
@@ -216,17 +215,15 @@
                     console.log('Please enter a Function and 1 or more Arguments.');
                 }
             },
-            async onCallDataAndFunctionAsync(funcName, funcArgs, returnType) {
+            async call(funcName, funcArgs) {
 
-                if (funcName && funcArgs && returnType) {
+                if (funcName && funcArgs) {
                     try {
                         const res = await this.contractInstance.call(funcName, funcArgs);
 
-                        if (returnType !== '()') {
-                            const data = await res.decode(returnType);
-                            console.log(data);
-                            return data
-                        }
+                        const data = await res.decode();
+                        console.log(data);
+                        return data
                     } catch (err) {
                         console.log(err);
                     }
@@ -235,7 +232,7 @@
                 }
             },
             async getContractTasks() {
-                const allToDosResponse = await this.onCallStatic('get_todos', `()`, 'list((int, (string,bool)))');
+                const allToDosResponse = await this.callStatic('get_todos', `[]`);
                 const parsedToDos = this.convertSophiaListToTodos(allToDosResponse);
                 console.log(parsedToDos);
                 this.$store.dispatch('setToDos', parsedToDos);
@@ -261,29 +258,31 @@
 
                 return tempCollection;
             }
-        },
+        }
+        ,
         async created() {
             this.$store.dispatch('toggleLoading');
 
             await this.getClient();
 
-//            await this.getToDosOneByOne();
-
             await this.getContractTasks();
             this.manageVisibility();
 
             this.$store.dispatch('toggleLoading');
-        },
+        }
+        ,
 
         // a custom directive to wait for the DOM to be updated
         // before focusing on the input field.
         // http://vuejs.org/guide/custom-directive.html
         directives: {
-            'todo-focus': function (el, binding) {
-                if (binding.value) {
-                    el.focus()
+            'todo-focus':
+
+                function (el, binding) {
+                    if (binding.value) {
+                        el.focus()
+                    }
                 }
-            }
         }
     }
 </script>
