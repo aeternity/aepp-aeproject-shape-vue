@@ -177,7 +177,7 @@
 
             async getReverseWindow() {
                 const iframe = document.createElement('iframe')
-                iframe.src = prompt('Enter wallet URL', 'http://localhost:9000')
+                iframe.src = prompt('Enter wallet URL', 'http://localhost:8081')
                 iframe.style.display = 'none'
                 document.body.appendChild(iframe)
                 await new Promise(resolve => {
@@ -200,18 +200,17 @@
 
                     this.$store.dispatch('setAccount', this.client);
                     this.contractInstance = await this.client.getContractInstance(contractDetails.contractSource, { contractAddress: contractDetails.contractAddress });
-                    console.log(this.contractInstance);
                 } catch (err) {
                     console.log(err);
                 }
             },
 
             async getContractTasks() {
-                const allToDosResponse = await this.contractInstance.call('get_todos', '[]', { callStatic: true });
-                const allToDos = await allToDosResponse.decode();
-                const parsedToDos = this.convertSophiaListToTodos(allToDos);
-                console.log(parsedToDos);
-                this.$store.dispatch('setToDos', parsedToDos);
+                const allToDosResponse = await this.contractInstance.call("get_todos", []);
+				const allToDos = await allToDosResponse.decode();
+				const parsedToDos = this.convertSophiaListToTodos(allToDos);
+				
+				this.$store.dispatch('setToDos', parsedToDos);
             },
 
             convertToTODO(data) {
@@ -225,13 +224,14 @@
                 let tempCollection = [];
                 let taskId;
 
-                for (let idTodoData of data) {
-                    taskId = idTodoData[0];
+                for (let dataIndex in data) {
+					let todoInfo = data[dataIndex];
 
-                    let todo = this.convertToTODO(idTodoData[1]);
-                    todo.id = taskId;
+					taskId = todoInfo[0];
+					let todo = this.convertToTODO(todoInfo[1]);
+					todo.id = taskId;
 
-                    tempCollection.push(todo);
+					tempCollection.push(todo);
                 }
 
                 return tempCollection;

@@ -60,7 +60,7 @@
                 height: null,
                 url: 'http://localhost:3001/',
                 internalUrl: 'http://localhost:3001/internal/',
-                compilerUrl: 'https://compiler.aepps.com',
+                compilerUrl: 'http://localhost:3080',
                 aeppUrl: '//0.0.0.0:8081'
             }
         },
