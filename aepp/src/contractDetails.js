@@ -12,18 +12,18 @@ export default {
       map_user_todo_id: map(address, int)}
   
   
-    public stateful function init() =
+    public stateful entrypoint init() =
       { map_user_todos = {},
         map_user_todo_count = {},
         map_user_todo_id = {}}
   
-    public function get_todo_count(user: address) : int =
+    public entrypoint get_todo_count(user: address) : int =
       Map.lookup_default(user, state.map_user_todo_count, 0)
   
     private function get_todo_id(user: address) : int =
       Map.lookup_default(user, state.map_user_todo_id, 0)
   
-    public stateful function add_todo(todo_name: string) : int =
+    public stateful entrypoint add_todo(todo_name: string) : int =
       let new_todo : todo = {
         name = todo_name,
         is_completed = false}
@@ -37,7 +37,7 @@ export default {
   
       id
   
-    public stateful function edit_todo_state(todo_id: int, is_completed: bool) =
+    public stateful entrypoint edit_todo_state(todo_id: int, is_completed: bool) =
   
       let current_todo : todo = get_todo_by_id'(Call.caller, todo_id)
       let edited_todo : todo = {
@@ -46,7 +46,7 @@ export default {
   
       put(state{map_user_todos[Call.caller][todo_id] = edited_todo})
   
-    public stateful function edit_todo_name(todo_id: int, todo_name: string) =
+    public stateful entrypoint edit_todo_name(todo_id: int, todo_name: string) =
   
       let current_todo : todo = get_todo_by_id'(Call.caller, todo_id)
       let edited_todo : todo = {
@@ -55,7 +55,7 @@ export default {
   
       put(state{map_user_todos[Call.caller][todo_id] = edited_todo})
   
-    public stateful function delete_todo(todo_id: int) =
+    public stateful entrypoint delete_todo(todo_id: int) =
       let todos: map(int,todo) = Map.lookup_default(Call.caller, state.map_user_todos, {}) // get_todos_by_user(Call.caller)
       let updated_todos = Map.delete(todo_id, todos)
   
@@ -64,7 +64,7 @@ export default {
       let count = get_todo_count(Call.caller) - 1
       put(state{map_user_todo_count[Call.caller] = count})
   
-    public function get_todo_by_id(id: int) : todo =
+    public entrypoint get_todo_by_id(id: int) : todo =
       let todos: map(int,todo) = Map.lookup_default(Call.caller, state.map_user_todos, {})
       let result = switch(Map.lookup(id, todos))
                       // None => {}
@@ -72,7 +72,7 @@ export default {
   
       result
   
-    public function get_todos() : list((int, todo)) = 
+    public entrypoint get_todos() : list((int, todo)) = 
       
       let user_todos = Map.lookup_default(Call.caller, state.map_user_todos, {})
       let todos = Map.to_list(user_todos)
