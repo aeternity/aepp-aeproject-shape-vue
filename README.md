@@ -58,7 +58,7 @@ Now we are ready to run the aepp.
 First start the identity/wallet Aepp, which will start on port 8080:
 
 ```bash
-    cd aepp-forgae-shape-vue/identity-provider
+    cd aepp-aeproject-shape-vue/identity-provider
     npm run serve
 ```
 
