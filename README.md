@@ -12,7 +12,7 @@ Please follow the steps bellow:
 
 First you need to install **[aeproject](https://github.com/aeternity/aepp-aeproject-js)** (if it is installed already, skip this step).
 
-```bash
+```
     npm i -g aeproject
 ```
 
