@@ -2,7 +2,7 @@
 	<div v-if="!runningInFrame" class="">
 		<div class="wallet-details">
 			<h1 class="">Wallet Aepp</h1>
-
+            <ClientConfig></ClientConfig>
 			<div class="border">
 				<div class="">
 					<div class="">
@@ -34,9 +34,13 @@
     // AE_SDK_MODULES is a webpack alias present in webpack.config.js
     import Wallet from '@aeternity/aepp-sdk/es/ae/wallet'
     import MemoryAccount from '@aeternity/aepp-sdk/es/account/memory'
+    import ClientConfig from '@/components/ClientConfig'
     import account from '../account'
 
     export default {
+        components: {
+            ClientConfig
+        },
         data() {
             return {
                 // Testnet config
