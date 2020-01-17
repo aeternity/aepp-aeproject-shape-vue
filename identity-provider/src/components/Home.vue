@@ -40,7 +40,6 @@
     import Wallet from '@aeternity/aepp-sdk/es/ae/wallet'
     import MemoryAccount from '@aeternity/aepp-sdk/es/account/memory'
     import ClientConfig from '@/components/ClientConfig'
-    import account from '../account'
 
     export default {
         components: {
