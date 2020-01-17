@@ -31,7 +31,7 @@
 </template>
 
 <script>
-    // AE_SDK_MODULES is a webpack alias present in webpack.config.js
+    import { mapState, mapActions } from 'vuex';
     import Wallet from '@aeternity/aepp-sdk/es/ae/wallet'
     import MemoryAccount from '@aeternity/aepp-sdk/es/account/memory'
     import ClientConfig from '@/components/ClientConfig'

@@ -20,16 +20,16 @@
       <div class="col-half">
         <h2>Network</h2>
         <div>
-          <ae-check v-model="selectedNetwork" name="network_id" value="ae_devnet" type="radio">
+          <ae-check v-model="network" name="network_id" value="ae_devnet" type="radio">
             Local
           </ae-check>
         </div>
         <div>
-          <ae-check v-model="selectedNetwork" name="network_id" value="ae_uat" type="radio">
+          <ae-check v-model="network" name="network_id" value="ae_uat" type="radio">
             Test
           </ae-check>
         </div>
-        <div>value: {{ selectedNetwork }}</div>
+        <div>value: {{ network }}</div>
       </div>
       <div class="col-half">
         <ae-input label="Aepp Url" placeholder="http://127.0.0.1:8081" v-model="aeppUrl">
@@ -48,7 +48,8 @@
 </template>
 
 <script>
-import {AeButton, AeInput, AeToolbar, AeDivider, AeCheck, mixins } from '@aeternity/aepp-components';
+import { mapFields } from 'vuex-map-fields';
+import { AeButton, AeInput, AeToolbar, AeDivider, AeCheck, mixins } from '@aeternity/aepp-components';
 import network from '../networks';
 export default {
     name: "ClientConfig",
@@ -60,13 +61,13 @@ export default {
         AeDivider,
         AeCheck
     },
-    data() {
-        return {
-            publicKey: "",
-            privateKey: "",
-            selectedNetwork: "",
-            aeppUrl: ""
-        }
+    computed: {
+        ...mapFields([
+            'account.publicKey',
+            'account.privateKey',
+            'network',
+            'aeppUrl'
+        ])
     }
 }
 </script>
