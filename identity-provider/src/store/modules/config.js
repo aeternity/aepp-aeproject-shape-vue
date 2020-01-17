@@ -6,7 +6,8 @@ const state = {
         privateKey: undefined,
     },
     network: undefined,
-    aeppUrl: undefined
+    aeppUrl: undefined,
+    status: undefined
 };
 
 const mutations = {
@@ -14,7 +15,13 @@ const mutations = {
 }
 
 const getters = {
-    getField
+    getField,
+    getNetwork(state) {
+        return getField(state.network);
+    },
+    getAeppUrl(state) {
+        return getField(state.aeppUrl)
+    }
 }
 
 const actions = {}

@@ -41,7 +41,7 @@
     </fieldset>
     <ae-divider />
     <div class="col-half">
-    <ae-button face="round" fill="primary" extend>Connect</ae-button>
+    <ae-button face="round" fill="primary" @click="this.$parent.getClient" extend>Connect</ae-button>
     </div>
     <ae-divider />
   </div>
