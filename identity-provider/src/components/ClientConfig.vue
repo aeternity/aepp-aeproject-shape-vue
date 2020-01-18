@@ -20,12 +20,12 @@
       <div class="col-half">
         <h2>Network</h2>
         <div>
-          <ae-check v-model="network" name="network_id" value="ae_devnet" type="radio">
+          <ae-check v-model="network" value="local" type="radio">
             Local
           </ae-check>
         </div>
         <div>
-          <ae-check v-model="network" name="network_id" value="ae_uat" type="radio">
+          <ae-check v-model="network" value="test" type="radio">
             Test
           </ae-check>
         </div>

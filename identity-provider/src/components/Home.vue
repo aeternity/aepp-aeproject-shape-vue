@@ -87,6 +87,9 @@
             aeppUrl: function() {
                 return this.$store.state.config.aeppUrl;
             },
+            network: function() {
+                return this.$store.getters.getNetwork;
+            },
             connection: function() {
 
             },

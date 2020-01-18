@@ -1,4 +1,5 @@
 import { getField, updateField } from 'vuex-map-fields';
+import networks from '../../networks';
 
 const state = {
     account: {
@@ -17,7 +18,7 @@ const mutations = {
 const getters = {
     getField,
     getNetwork(state) {
-        return getField(state.network);
+        return networks[state.network];
     },
     getAeppUrl(state) {
         return getField(state.aeppUrl)
