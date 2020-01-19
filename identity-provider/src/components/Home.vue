@@ -1,6 +1,6 @@
 <template>
 	<div v-if="!runningInFrame" class="">
-		<div class="wallet-details">
+		<div v-if="isPanelOpen" class="wallet-details">
 			<h1 class="">Wallet Aepp</h1>
             <ClientConfig></ClientConfig>
 			<div class="border">
@@ -26,9 +26,12 @@
 				</div>
 			</div>
 		</div>
+        <div class="panel-control">
+            <a href="#" @click="togglePanel">{{ panelStatus }}</a>
+        </div>
 
 		<div v-if="!aeppUrl" class="">
-			Loading Aepp...
+            Aepp not loaded yet!
 		</div>
 		<!-- external app -->
 		<iframe v-show="aeppUrl" ref="aepp" class="" src="aeppUrl" frameborder="1"></iframe>
@@ -47,16 +50,21 @@
         },
         data() {
             return {
+                panelStatus: "Open",
+                isPanelOpen: false,
                 runningInFrame: window.parent !== window,
                 client: null,
                 balance: null,
                 height: null,
-                url: 'http://localhost:3001/',
-                internalUrl: 'http://localhost:3001/internal/',
-                compilerUrl: 'http://localhost:3080'
             }
         },
         methods: {
+            togglePanel() {
+
+                this.isPanelOpen = this.isPanelOpen ?
+                    (this.panelStatus = 'Open', false) :
+                    (this.panelStatus = 'Close', true);
+            },
             confirmDialog(method, params, { id }) {
                 return Promise.resolve(window.confirm(`User ${ id } wants to run ${ method } ${ params }`))
             },
@@ -101,12 +109,23 @@
 <style scoped>
 	.wallet-details {
 		border: 1px solid #F7286E;
-		border-radius: 10px;
 		padding: 20px 20px 40px 20px;
 		background: #311b58;
 		color: white;
 		font-family: 'Avenir', Helvetica, Arial, sans-serif;
 	}
+
+    .panel-control {
+        background-color: #FF0D6A;
+        padding: 5px 20px;
+        width: max-content;
+        margin: 0 auto;
+    }
+    .panel-control a {
+        text-decoration: none;
+        color: #ffffff;
+        font-family: "Inter UI", sans-serif;
+    }
 
 	.wallet-details-label {
 		font-weight: bold;
