@@ -19,9 +19,6 @@ const getters = {
     getField,
     getNetwork(state) {
         return networks[state.network];
-    },
-    getAeppUrl(state) {
-        return getField(state.aeppUrl)
     }
 }
 
