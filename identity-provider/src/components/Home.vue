@@ -34,7 +34,7 @@
             Aepp not loaded yet!
 		</div>
 		<!-- external app -->
-		<iframe v-show="aeppUrl" ref="aepp" class="" src="aeppUrl" frameborder="1"></iframe>
+		<iframe v-show="aeppUrl" ref="aepp" class="" src="about:blank" frameborder="0"></iframe>
 	</div>
 </template>
 
@@ -69,23 +69,35 @@
                 return Promise.resolve(window.confirm(`User ${ id } wants to run ${ method } ${ params }`))
             },
             async getClient() {
-                console.log(this.config);
-                this.client = await Wallet({
-                    url: this.url,
-                    internalUrl: this.internalUrl,
-                    compilerUrl: this.compilerUrl,
-                    accounts: [MemoryAccount({ keypair: { secretKey: this.config.account.privateKey, publicKey: this.config.account.publicKey }})],
-                    address: this.config.account.publicKey,
-                    onTx: this.confirmDialog,
-                    onChain: this.confirmDialog,
-                    onAccount: this.confirmDialog,
-                    onContract: this.confirmDialog
-                });
+                console.log(this.network);
+                try {
+                    this.client = await Wallet({
+                        url: this.network.url,
+                        internalUrl: this.network.internalUrl,
+                        compilerUrl: this.network.compilerUrl,
+                        accounts: [MemoryAccount({
+                            keypair: {
+                                secretKey: this.config.account.privateKey,
+                                publicKey: this.config.account.publicKey
+                            }})],
+                        address: this.config.account.publicKey,
+                        onTx: this.confirmDialog,
+                        onChain: this.confirmDialog,
+                        onAccount: this.confirmDialog,
+                        onContract: this.confirmDialog
+                    });
+
+                    this.height = await this.client.height()
+                    this.balance = await this.client.balance(
+                        this.config.account.publicKey)
+                        .catch(() => 0)
+                } catch (e) {
+                    console.log("ERROR:", e);
+                }
+
                 if (!this.runningInFrame) this.$refs.aepp.src = this.aeppUrl
                 else window.parent.postMessage({ jsonrpc: '2.0', method: 'ready' }, '*')
 
-                this.height = await this.client.height()
-                this.balance = await this.client.balance(this.pub).catch(() => 0)
             }
         },
         computed: {
@@ -97,10 +109,7 @@
             },
             network: function() {
                 return this.$store.getters.getNetwork;
-            },
-            connection: function() {
-
-            },
+            }
         }
     }
 </script>

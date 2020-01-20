@@ -1,14 +1,14 @@
 export default {
 	local: {
 		network_id: "ae_devnet",
-		host: "http://localhost:3001/",
-		internalHost: "http://localhost:3001/",
+		url: "http://localhost:3001/",
+		internalUrl: "http://localhost:3001/internal/",
 		compilerUrl: "http://localhost:3080"
 	},
 	test: {
 		network_id: "ae_uat",
-		host: "https://sdk-testnet.aepps.com/",
-		internalHost: "https://sdk-testnet.aepps.com/",
+		url: "https://sdk-testnet.aepps.com/",
+		internalUrl: "https://sdk-testnet.aepps.com/internal/",
 		compilerUrl: "https://compiler.aepps.com"
 	}
 }
