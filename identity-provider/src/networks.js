@@ -8,7 +8,7 @@ export default {
 	test: {
 		network_id: "ae_uat",
 		url: "https://sdk-testnet.aepps.com/",
-		internalUrl: "https://sdk-testnet.aepps.com/internal/",
+		internalUrl: "https://sdk-testnet.aepps.com/",
 		compilerUrl: "https://compiler.aepps.com"
 	}
 }

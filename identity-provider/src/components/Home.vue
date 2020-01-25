@@ -81,6 +81,7 @@
                                 publicKey: this.config.account.publicKey
                             }})],
                         address: this.config.account.publicKey,
+                        networkId: this.network.network_id,
                         onTx: this.confirmDialog,
                         onChain: this.confirmDialog,
                         onAccount: this.confirmDialog,
