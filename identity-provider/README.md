@@ -38,6 +38,14 @@ Let's deploy the contract:
     aeproject deploy
 ```
 
+## Configure client component
+
+This feature provides a form that allows to input the public and
+private key of the wallet account, select the network to connect to, and input
+the url of the aepp.
+
+![](https://i.imgur.com/7WEWDEF.gif)
+
 ## Copy the deployed contract address
 
 ```
