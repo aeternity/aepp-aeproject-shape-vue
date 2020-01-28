@@ -1,12 +1,12 @@
 <template>
 	<div v-if="!runningInFrame" class="">
-		<div class="wallet-details">
+		<div v-if="isPanelOpen" class="wallet-details">
 			<h1 class="">Wallet Aepp</h1>
-
+            <ClientConfig></ClientConfig>
 			<div class="border">
 				<div class="">
 					<div class="">
-						<span class="wallet-details-label">Public Key:</span> {{pub}}
+						<span class="wallet-details-label">Public Key:</span> {{ config.account.publicKey }}
 					</div>
 				</div>
 				<div v-if="height" class="">
@@ -19,74 +19,98 @@
 						<span class="wallet-details-label">Balance:</span> {{balance}}
 					</div>
 				</div>
+				<div class="">
+					<div class="p-2 w-1/4">
+						<span class="wallet-details-label">Network:</span> {{ config.network }}
+					</div>
+				</div>
 			</div>
 		</div>
+        <div class="panel-control">
+            <a href="#" @click="togglePanel">{{ panelStatus }}</a>
+        </div>
 
 		<div v-if="!aeppUrl" class="">
-			Loading Aepp...
+            Aepp not loaded yet!
 		</div>
 		<!-- external app -->
-		<iframe v-show="aeppUrl" ref="aepp" class="" src="about:blank" frameborder="1"></iframe>
+		<iframe v-show="aeppUrl" ref="aepp" class="" src="about:blank" frameborder="0"></iframe>
 	</div>
 </template>
 
 <script>
-    // AE_SDK_MODULES is a webpack alias present in webpack.config.js
+    import { mapState, mapActions } from 'vuex';
     import Wallet from '@aeternity/aepp-sdk/es/ae/wallet'
     import MemoryAccount from '@aeternity/aepp-sdk/es/account/memory'
-    import account from '../account'
+    import ClientConfig from '@/components/ClientConfig'
 
     export default {
+        components: {
+            ClientConfig
+        },
         data() {
             return {
-                // Testnet config
-                // runningInFrame: window.parent !== window,
-                // pub: 'ak_6A2vcm1Sz6aqJezkLCssUXcyZTX7X8D5UwbuS2fRJr9KkYpRU', // Your public key
-                // priv: 'a7a695f999b1872acb13d5b63a830a8ee060ba688a478a08c6e65dfad8a01cd70bb4ed7927f97b51e1bcb5e1340d12335b2a2b12c8bc5221d63c4bcb39d41e61', // Your private key
-                // client: null,
-                // balance: null,
-                // height: null,
-                // url: 'https://sdk-testnet.aepps.com/',
-                // internalUrl: 'https://sdk-testnet.aepps.com/',
-                // compilerUrl: 'https://compiler.aepps.com',
-                // aeppUrl: '//0.0.0.0:8081'
-
-                // Local config
+                panelStatus: "Open",
+                isPanelOpen: false,
                 runningInFrame: window.parent !== window,
-                pub: account.pub, // Your public key
-                priv: account.priv, // Your private key
                 client: null,
                 balance: null,
                 height: null,
-                url: 'http://localhost:3001/',
-                internalUrl: 'http://localhost:3001/internal/',
-                compilerUrl: 'http://localhost:3080',
-                aeppUrl: '//0.0.0.0:8081'
             }
         },
         methods: {
+            togglePanel() {
+
+                this.isPanelOpen = this.isPanelOpen ?
+                    (this.panelStatus = 'Open', false) :
+                    (this.panelStatus = 'Close', true);
+            },
             confirmDialog(method, params, { id }) {
                 return Promise.resolve(window.confirm(`User ${ id } wants to run ${ method } ${ params }`))
+            },
+            async getClient() {
+                console.log(this.network);
+                try {
+                    this.client = await Wallet({
+                        url: this.network.url,
+                        internalUrl: this.network.internalUrl,
+                        compilerUrl: this.network.compilerUrl,
+                        accounts: [MemoryAccount({
+                            keypair: {
+                                secretKey: this.config.account.privateKey,
+                                publicKey: this.config.account.publicKey
+                            }})],
+                        address: this.config.account.publicKey,
+                        networkId: this.network.network_id,
+                        onTx: this.confirmDialog,
+                        onChain: this.confirmDialog,
+                        onAccount: this.confirmDialog,
+                        onContract: this.confirmDialog
+                    });
+
+                    this.height = await this.client.height()
+                    this.balance = await this.client.balance(
+                        this.config.account.publicKey)
+                        .catch(() => 0)
+                } catch (e) {
+                    console.log("ERROR:", e);
+                }
+
+                if (!this.runningInFrame) this.$refs.aepp.src = this.aeppUrl
+                else window.parent.postMessage({ jsonrpc: '2.0', method: 'ready' }, '*')
+
             }
         },
-        async created() {
-            this.client = await Wallet({
-                url: this.url,
-                internalUrl: this.internalUrl,
-                compilerUrl: this.compilerUrl,
-                accounts: [MemoryAccount({ keypair: { secretKey: this.priv, publicKey: this.pub } })],
-                address: this.pub,
-                onTx: this.confirmDialog,
-                onChain: this.confirmDialog,
-                onAccount: this.confirmDialog,
-                onContract: this.confirmDialog
-            })
-
-            if (!this.runningInFrame) this.$refs.aepp.src = this.aeppUrl
-            else window.parent.postMessage({ jsonrpc: '2.0', method: 'ready' }, '*')
-
-            this.height = await this.client.height()
-            this.balance = await this.client.balance(this.pub).catch(() => 0)
+        computed: {
+            config: function() {
+                return this.$store.state.config;
+            },
+            aeppUrl: function() {
+                return this.$store.state.config.aeppUrl;
+            },
+            network: function() {
+                return this.$store.getters.getNetwork;
+            }
         }
     }
 </script>
@@ -95,12 +119,23 @@
 <style scoped>
 	.wallet-details {
 		border: 1px solid #F7286E;
-		border-radius: 10px;
 		padding: 20px 20px 40px 20px;
 		background: #311b58;
 		color: white;
 		font-family: 'Avenir', Helvetica, Arial, sans-serif;
 	}
+
+    .panel-control {
+        background-color: #FF0D6A;
+        padding: 5px 20px;
+        width: max-content;
+        margin: 0 auto;
+    }
+    .panel-control a {
+        text-decoration: none;
+        color: #ffffff;
+        font-family: "Inter UI", sans-serif;
+    }
 
 	.wallet-details-label {
 		font-weight: bold;
